@@ -1,39 +1,50 @@
+// lib/helpers/database_helper.dart
+import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/clothing_item.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._internal();
-  static Database? _database;
-
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static DatabaseHelper get instance => _instance;
   DatabaseHelper._internal();
 
+  static Database? _database;
+
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB();
+    _database ??= await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDB() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'wardrobe.db');
+  Future<Database> _initDatabase() async {
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath, 'wardrobe.db');
 
     return await openDatabase(
       path,
-      version: 1,
-      onCreate: _createDB,
+      version: 2, // Increment version to trigger migration
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
-  Future<void> _createDB(Database db, int version) async {
+  Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE clothing_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        category TEXT,
-        imagePath TEXT
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        imagePath TEXT NOT NULL,
+        colorHex TEXT NOT NULL DEFAULT 'FF0000FF'
       )
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add colorHex column if it doesn't exist
+      await db.execute('ALTER TABLE clothing_items ADD COLUMN colorHex TEXT DEFAULT "FF0000FF"');
+    }
   }
 
   Future<int> insertClothingItem(ClothingItem item) async {
@@ -41,25 +52,63 @@ class DatabaseHelper {
     return await db.insert('clothing_items', item.toMap());
   }
 
+  Future<List<ClothingItem>> getClothingItems() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('clothing_items');
+    
+    return List.generate(maps.length, (i) {
+      return ClothingItem.fromMap(maps[i]);
+    });
+  }
+
+  // This method is used in your main.dart
   Future<List<ClothingItem>> getAllItems() async {
-    final db = await database;
-    final maps = await db.query('clothing_items');
-    return maps.map((map) => ClothingItem.fromMap(map)).toList();
+    return await getClothingItems();
   }
 
-  Future<int> deleteItem(int id) async {
+  Future<void> deleteClothingItem(int id) async {
     final db = await database;
-    return await db.delete('clothing_items', where: 'id = ?', whereArgs: [id]);
+    await db.delete(
+      'clothing_items',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
-  Future<int> updateClothingItem(ClothingItem item) async {
-  final db = await database;
-  return await db.update(
-    'clothing_items',
-    item.toMap(),
-    where: 'id = ?',
-    whereArgs: [item.id],
-  );
-}
+  // This method is used in your main.dart
+  Future<void> deleteItem(int id) async {
+    return await deleteClothingItem(id);
+  }
+
+  Future<void> updateClothingItem(ClothingItem item) async {
+    final db = await database;
+    await db.update(
+      'clothing_items',
+      item.toMap(),
+      where: 'id = ?',
+      whereArgs: [item.id],
+    );
+  }
+
+  Future<ClothingItem?> getClothingItemById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'clothing_items',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (maps.isNotEmpty) {
+      return ClothingItem.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<void> closeDatabase() async {
+    final db = _database;
+    if (db != null) {
+      await db.close();
+    }
+  }
 }
 

@@ -3,12 +3,14 @@ class ClothingItem {
   final String name;
   final String category;
   final String imagePath;
+  final String colorHex; // ✅ This is the new field
 
   ClothingItem({
     this.id,
     required this.name,
     required this.category,
     required this.imagePath,
+    required this.colorHex, // ✅ Mark it required
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +19,7 @@ class ClothingItem {
       'name': name,
       'category': category,
       'imagePath': imagePath,
+      'colorHex': colorHex, // ✅ Store in database
     };
   }
 
@@ -26,6 +29,7 @@ class ClothingItem {
       name: map['name'],
       category: map['category'],
       imagePath: map['imagePath'],
+      colorHex: map['colorHex'], // ✅ Load from database
     );
   }
 }
