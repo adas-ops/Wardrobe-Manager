@@ -1,5 +1,5 @@
 // lib/main.dart
-
+import 'screens/edit_clothing_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,7 +12,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class AddClothingScreen extends StatefulWidget {
-  const AddClothingScreen({Key? key}) : super(key: key);
+  const AddClothingScreen({super.key});
 
   @override
   State<AddClothingScreen> createState() => _AddClothingScreenState();
@@ -140,7 +140,7 @@ class _AddClothingScreenState extends State<AddClothingScreen> {
   }
 }
 class WardrobeScreen extends StatefulWidget {
-  const WardrobeScreen({Key? key}) : super(key: key);
+  const WardrobeScreen({super.key});
 
   @override
   State<WardrobeScreen> createState() => _WardrobeScreenState();
@@ -148,6 +148,9 @@ class WardrobeScreen extends StatefulWidget {
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
   List<ClothingItem> _items = [];
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+
 
   @override
   void initState() {
@@ -155,30 +158,93 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     _loadItems();
   }
 
-  Future<void> _loadItems() async {
-    final data = await DatabaseHelper.instance.getAllItems();
-    setState(() {
-      _items = data;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: _items.length,
-      itemBuilder: (context, index) {
-        final item = _items[index];
-      return ListTile(
-      leading: Image.file(File(item.imagePath), width: 50, height: 50, fit: BoxFit.cover),
-      title: Text(item.name),
-      subtitle: Text(item.category),
-      onLongPress: () => _confirmDelete(item.id!),
-);
+ Future<void> _loadItems([String query = '']) async {
+  final data = await DatabaseHelper.instance.getAllItems();
+  setState(() {
+    _items = data.where((item) {
+      final matchesQuery = item.name.toLowerCase().contains(query.toLowerCase());
+      final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
+      return matchesQuery && matchesCategory;
+    }).toList();
+  });
+}
 
 
-      },
-    );
-  }
+
+@override
+Widget build(BuildContext context) {
+  final categories = ['All', 'Shirt', 'Pants', 'Shoes', 'Accessories'];
+
+  return Column(
+    children: [
+      SizedBox(
+        height: 50,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final cat = categories[index];
+            final isSelected = cat == _selectedCategory;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ChoiceChip(
+                label: Text(cat),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedCategory = cat;
+                  });
+                  _loadItems(_searchQuery);
+                },
+              ),
+            );
+          },
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(8),
+        child: TextField(
+          decoration: const InputDecoration(
+            labelText: 'Search by name',
+            prefixIcon: Icon(Icons.search),
+          ),
+          onChanged: (value) {
+            _searchQuery = value;
+            _loadItems(_searchQuery);
+          },
+        ),
+      ),
+      Expanded(
+        child: ListView.builder(
+          itemCount: _items.length,
+          itemBuilder: (context, index) {
+            final item = _items[index];
+            return ListTile(
+              leading: Image.file(File(item.imagePath), width: 50, height: 50, fit: BoxFit.cover),
+              title: Text(item.name),
+              subtitle: Text(item.category),
+              onTap: () async {
+                final changed = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditClothingScreen(item: item),
+                  ),
+                );
+                if (changed == true) _loadItems(_searchQuery);
+              },
+              onLongPress: () => _confirmDelete(item.id!),
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+
+
+
   void _confirmDelete(int id) {
   showDialog(
     context: context,

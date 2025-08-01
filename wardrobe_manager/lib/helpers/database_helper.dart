@@ -51,4 +51,15 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete('clothing_items', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<int> updateClothingItem(ClothingItem item) async {
+  final db = await database;
+  return await db.update(
+    'clothing_items',
+    item.toMap(),
+    where: 'id = ?',
+    whereArgs: [item.id],
+  );
 }
+}
+
