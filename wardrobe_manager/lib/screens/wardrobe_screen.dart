@@ -1,8 +1,7 @@
-// lib/screens/wardrobe_screen.dart
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:wardrobe_manager/models/clothing_item.dart';
 import 'package:wardrobe_manager/helpers/database_helper.dart';
+import 'package:wardrobe_manager/models/clothing_item.dart';
 import 'package:wardrobe_manager/screens/edit_clothing_screen.dart';
 
 class WardrobeScreen extends StatefulWidget {
@@ -16,7 +15,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   List<ClothingItem> _items = [];
   String _searchQuery = '';
   String _selectedCategory = 'All';
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey(); // Add this key
+  List<String> _categories = ['All'];
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   @override
   void initState() {
@@ -25,42 +25,34 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   }
 
   Future<void> _loadItems([String query = '']) async {
-    try {
-      final data = await DatabaseHelper.instance.getAllItems();
-      if (mounted) {
-        setState(() {
-          _items = data.where((item) {
-            final matchesQuery = item.name.toLowerCase().contains(query.toLowerCase());
-            final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
-            return matchesQuery && matchesCategory;
-          }).toList();
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        // Use scaffold messenger key instead of context
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(content: Text('Error loading items: $e')),
-        );
-      }
-    }
+    final data = await _dbHelper.getAllItems();
+    
+    // Extract unique categories
+    final uniqueCategories = data.map((e) => e.category).toSet().toList();
+    uniqueCategories.sort();
+    
+    setState(() {
+      _categories = ['All', ...uniqueCategories];
+      _items = data.where((item) {
+        final matchesQuery = item.name.toLowerCase().contains(query.toLowerCase());
+        final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
+        return matchesQuery && matchesCategory;
+      }).toList();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = ['All', 'Shirt', 'Pants', 'Shoes', 'Accessories'];
-
-    return ScaffoldMessenger( // Wrap with ScaffoldMessenger
-      key: _scaffoldMessengerKey,
-      child: Column(
+    return Scaffold(
+      body: Column(
         children: [
           SizedBox(
             height: 50,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
+              itemCount: _categories.length,
               itemBuilder: (context, index) {
-                final cat = categories[index];
+                final cat = _categories[index];
                 final isSelected = cat == _selectedCategory;
 
                 return Padding(
@@ -69,9 +61,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     label: Text(cat),
                     selected: isSelected,
                     onSelected: (_) {
-                      setState(() {
-                        _selectedCategory = cat;
-                      });
+                      setState(() => _selectedCategory = cat);
                       _loadItems(_searchQuery);
                     },
                   ),
@@ -134,14 +124,29 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                           ),
                           title: Text(item.name),
                           subtitle: Text(item.category),
-                          trailing: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: Color(int.parse(item.colorHex, radix: 16)),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.grey),
-                            ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: Color(int.parse(item.colorHex, radix: 16)),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.star,
+                                  color: item.isFavorite ? Colors.amber : Colors.grey,
+                                ),
+                                onPressed: () async {
+                                  await _dbHelper.toggleFavorite(item.id!, !item.isFavorite);
+                                  _loadItems(_searchQuery);
+                                },
+                              ),
+                            ],
                           ),
                           onTap: () async {
                             final changed = await Navigator.push(
@@ -150,7 +155,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 builder: (context) => EditClothingScreen(item: item),
                               ),
                             );
-                            if (changed == true && mounted) {
+                            if (changed == true) {
                               _loadItems(_searchQuery);
                             }
                           },
@@ -168,49 +173,27 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   void _confirmDelete(int id) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Delete Item'),
         content: const Text('Are you sure you want to delete this item?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              try {
-                await DatabaseHelper.instance.deleteItem(id);
-                
-                // Close dialog first
-                Navigator.pop(dialogContext);
-                
-                // Check if widget is still mounted
-                if (!mounted) return;
-                
-                // Refresh the list
-                _loadItems();
-                
-                // Show success message using the key
-                _scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(content: Text('Item deleted successfully')),
-                );
-              } catch (e) {
-                // Close dialog on error
-                Navigator.pop(dialogContext);
-                
-                // Check if widget is still mounted
-                if (!mounted) return;
-                
-                // Show error message using the key
-                _scaffoldMessengerKey.currentState?.showSnackBar(
-                  SnackBar(content: Text('Error deleting item: $e')),
-                );
-              }
+              await _dbHelper.deleteItem(id);
+              Navigator.pop(context);
+              _loadItems(_searchQuery);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Item deleted successfully')),
+              );
             },
             child: const Text('Delete'),
           ),
         ],
       ),
     );
-  }  
+  }
 }

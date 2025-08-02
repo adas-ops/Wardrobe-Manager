@@ -5,6 +5,7 @@ class ClothingItem {
   final String imagePath;
   final String colorHex;
   final String dateAdded;
+  final bool isFavorite;
 
   ClothingItem({
     this.id,
@@ -13,6 +14,7 @@ class ClothingItem {
     required this.imagePath,
     required this.colorHex,
     required this.dateAdded,
+    this.isFavorite = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +25,7 @@ class ClothingItem {
       'imagePath': imagePath,
       'colorHex': colorHex,
       'dateAdded': dateAdded,
+      'isFavorite': isFavorite ? 1 : 0,
     };
   }
 
@@ -33,7 +36,8 @@ class ClothingItem {
       category: map['category'],
       imagePath: map['imagePath'],
       colorHex: map['colorHex'],
-      dateAdded: map['dateAdded'] ?? DateTime.now().toIso8601String(),
+      dateAdded: map['dateAdded'],
+      isFavorite: map['isFavorite'] == 1,
     );
   }
 }

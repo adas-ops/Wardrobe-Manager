@@ -1,10 +1,9 @@
-// lib/screens/edit_clothing_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/clothing_item.dart';
-import '../helpers/database_helper.dart';
-import '../widgets/color_picker.dart'; // Import color picker widget
+import 'package:wardrobe_manager/helpers/database_helper.dart';
+import 'package:wardrobe_manager/models/clothing_item.dart';
+import 'package:wardrobe_manager/widgets/advanced_color_picker.dart';
 
 class EditClothingScreen extends StatefulWidget {
   final ClothingItem item;
@@ -20,6 +19,8 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
   late TextEditingController _categoryController;
   File? _selectedImage;
   late Color _selectedColor;
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -27,28 +28,18 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
     _nameController = TextEditingController(text: widget.item.name);
     _categoryController = TextEditingController(text: widget.item.category);
     _selectedImage = File(widget.item.imagePath);
-    
-    // Parse the color from hex string
-    try {
-      _selectedColor = Color(int.parse(widget.item.colorHex, radix: 16));
-    } catch (e) {
-      _selectedColor = Colors.blue; // Default color if parsing fails
-    }
+    _selectedColor = Color(int.parse(widget.item.colorHex, radix: 16));
   }
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source);
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+    if (picked != null) {
+      setState(() => _selectedImage = File(picked.path));
     }
   }
 
   Future<void> _showImageSourceDialog() async {
-    if (!mounted) return;
-    
     await showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -78,41 +69,43 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
   }
 
   Future<void> _saveItem() async {
-    final name = _nameController.text.trim();
-    final category = _categoryController.text.trim();
-    final imagePath = _selectedImage?.path;
-
-    if (name.isEmpty || category.isEmpty || imagePath == null) {
-      if (!mounted) return;
+    if (_nameController.text.isEmpty || 
+        _categoryController.text.isEmpty || 
+        _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields')),
       );
       return;
     }
 
-    final updatedItem = ClothingItem(
-      id: widget.item.id,
-      name: name,
-      category: category,
-      imagePath: imagePath,
-      colorHex: _selectedColor.toARGB32().toRadixString(16),
-      dateAdded: widget.item.dateAdded,
-    );
-
+    setState(() => _isSaving = true);
+    
     try {
-      await DatabaseHelper.instance.updateClothingItem(updatedItem);
-
+      final updatedItem = ClothingItem(
+        id: widget.item.id,
+        name: _nameController.text,
+        category: _categoryController.text,
+        imagePath: _selectedImage!.path,
+        colorHex: _selectedColor.value.toRadixString(16),
+        dateAdded: widget.item.dateAdded,
+        isFavorite: widget.item.isFavorite,
+      );
+      
+      await _dbHelper.updateClothingItem(updatedItem);
       if (!mounted) return;
-
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Clothing item updated!')),
       );
-      Navigator.of(context).pop(true); // Return true to indicate success
+      
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating item: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -124,80 +117,58 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
-            onPressed: _saveItem,
-          ),
+            onPressed: _isSaving ? null : _saveItem,
+          )
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Clothing Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _categoryController,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Replaced custom color picker with reusable widget
-            ColorPickerWidget(
-              selectedColor: _selectedColor,
-              onColorSelected: (color) => setState(() => _selectedColor = color),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _showImageSourceDialog,
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Change Image'),
-            ),
-            if (_selectedImage != null) ...[
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  _selectedImage!,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+      body: _isSaving
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                children: [
+                  GestureDetector(
+                    onTap: _showImageSourceDialog,
+                    child: Container(
                       height: 200,
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image, size: 50),
-                            Text('Image not found'),
-                          ],
-                        ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _saveItem,
-              icon: const Icon(Icons.save),
-              label: const Text('Save Changes'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: _selectedImage != null
+                          ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                          : const Center(child: Text('No image selected')),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Item Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _categoryController,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AdvancedColorPicker(
+                    selectedColor: _selectedColor,
+                    onColorSelected: (color) => setState(() => _selectedColor = color),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _saveItem,
+                    child: const Text('Save Changes'),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 

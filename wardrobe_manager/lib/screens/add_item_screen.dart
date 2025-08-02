@@ -1,10 +1,9 @@
-// lib/screens/add_item_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/clothing_item.dart';
-import '../helpers/database_helper.dart';
-import '../widgets/color_picker.dart';
+import 'package:wardrobe_manager/helpers/database_helper.dart';
+import 'package:wardrobe_manager/models/clothing_item.dart';
+import 'package:wardrobe_manager/widgets/advanced_color_picker.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -18,20 +17,18 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _categoryController = TextEditingController();
   File? _selectedImage;
   Color _selectedColor = Colors.blue;
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  bool _isSaving = false;
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source);
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+    if (picked != null) {
+      setState(() => _selectedImage = File(picked.path));
     }
   }
 
   Future<void> _showImageSourceDialog() async {
-    if (!mounted) return;
-    
     await showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -60,106 +57,112 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  void _saveItem() async {
-    final now = DateTime.now().toIso8601String();
-    final name = _nameController.text.trim();
-    final category = _categoryController.text.trim();
-    final imagePath = _selectedImage?.path ?? '';
-
-    if (name.isEmpty || category.isEmpty || imagePath.isEmpty) {
-      if (!mounted) return;
+  Future<void> _saveItem() async {
+    if (_nameController.text.isEmpty || 
+        _categoryController.text.isEmpty || 
+        _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields and pick an image')),
       );
       return;
     }
 
-    final item = ClothingItem(
-      name: name, 
-      category: category, 
-      imagePath: imagePath,
-      colorHex: _selectedColor.toARGB32().toRadixString(16), 
-      dateAdded: now,
-    );
+    setState(() => _isSaving = true);
     
     try {
-      await DatabaseHelper.instance.insertClothingItem(item);
-
+      final item = ClothingItem(
+        name: _nameController.text,
+        category: _categoryController.text,
+        imagePath: _selectedImage!.path,
+        colorHex: _selectedColor.value.toRadixString(16),
+        dateAdded: DateTime.now().toIso8601String(),
+      );
+      
+      await _dbHelper.insertClothingItem(item);
       if (!mounted) return;
-
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Clothing item saved!')),
       );
-
-      _nameController.clear();
-      _categoryController.clear();
-      setState(() => _selectedImage = null);
+      
+      Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving item: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: ListView(
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Clothing Name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _categoryController,
-            decoration: const InputDecoration(
-              labelText: 'Category',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ColorPickerWidget(
-            selectedColor: _selectedColor,
-            onColorSelected: (color) => setState(() => _selectedColor = color),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _showImageSourceDialog,
-            icon: const Icon(Icons.camera_alt),
-            label: const Text('Add Photo'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
-          if (_selectedImage != null) ...[
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                _selectedImage!,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _saveItem,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Clothing Item'),
+        actions: [
+          IconButton(
             icon: const Icon(Icons.save),
-            label: const Text('Save Item'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+            onPressed: _isSaving ? null : _saveItem,
+          )
         ],
       ),
+      body: _isSaving
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                children: [
+                  GestureDetector(
+                    onTap: _showImageSourceDialog,
+                    child: Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: _selectedImage == null
+                          ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.camera_alt, size: 50),
+                                SizedBox(height: 8),
+                                Text('Tap to add photo'),
+                              ],
+                            )
+                          : Image.file(_selectedImage!, fit: BoxFit.cover),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Item Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _categoryController,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  AdvancedColorPicker(
+                    selectedColor: _selectedColor,
+                    onColorSelected: (color) => setState(() => _selectedColor = color),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _saveItem,
+                    child: const Text('Save Item'),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
