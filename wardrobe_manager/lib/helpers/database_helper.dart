@@ -1,4 +1,3 @@
-// lib/helpers/database_helper.dart
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -22,7 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, // Increment version to trigger migration
+      version: 3, // Increment version to trigger migration
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -35,15 +34,27 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         category TEXT NOT NULL,
         imagePath TEXT NOT NULL,
-        colorHex TEXT NOT NULL DEFAULT 'FF0000FF'
+        colorHex TEXT NOT NULL DEFAULT 'FF0000FF',
+        dateAdded TEXT NOT NULL
       )
     ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Add colorHex column if it doesn't exist
       await db.execute('ALTER TABLE clothing_items ADD COLUMN colorHex TEXT DEFAULT "FF0000FF"');
+    }
+    if (oldVersion < 3) {
+      // Add dateAdded column with default value
+      await db.execute('ALTER TABLE clothing_items ADD COLUMN dateAdded TEXT');
+      
+      // Set default value for existing records
+      final now = DateTime.now().toIso8601String();
+      await db.update(
+        'clothing_items',
+        {'dateAdded': now},
+        where: 'dateAdded IS NULL',
+      );
     }
   }
 
@@ -61,7 +72,6 @@ class DatabaseHelper {
     });
   }
 
-  // This method is used in your main.dart
   Future<List<ClothingItem>> getAllItems() async {
     return await getClothingItems();
   }
@@ -75,7 +85,6 @@ class DatabaseHelper {
     );
   }
 
-  // This method is used in your main.dart
   Future<void> deleteItem(int id) async {
     return await deleteClothingItem(id);
   }
@@ -111,4 +120,3 @@ class DatabaseHelper {
     }
   }
 }
-

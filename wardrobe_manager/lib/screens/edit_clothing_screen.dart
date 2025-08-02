@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/clothing_item.dart';
 import '../helpers/database_helper.dart';
+import '../widgets/color_picker.dart'; // Import color picker widget
 
 class EditClothingScreen extends StatefulWidget {
   final ClothingItem item;
@@ -35,14 +36,45 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    final picked = await picker.pickImage(source: source);
     if (picked != null && mounted) {
       setState(() {
         _selectedImage = File(picked.path);
       });
     }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    if (!mounted) return;
+    
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _saveItem() async {
@@ -63,13 +95,14 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
       name: name,
       category: category,
       imagePath: imagePath,
-      colorHex: _selectedColor.value.toRadixString(16),
+      colorHex: _selectedColor.toARGB32().toRadixString(16),
+      dateAdded: widget.item.dateAdded,
     );
 
     try {
       await DatabaseHelper.instance.updateClothingItem(updatedItem);
 
-      if (!mounted) return; // Fixed: Check mounted before using context
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Clothing item updated!')),
@@ -81,56 +114,6 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
         SnackBar(content: Text('Error updating item: $e')),
       );
     }
-  }
-
-  Widget _buildColorPicker() {
-    final colors = [
-      Colors.red,
-      Colors.blue,
-      Colors.green,
-      Colors.yellow,
-      Colors.orange,
-      Colors.purple,
-      Colors.pink,
-      Colors.brown,
-      Colors.grey,
-      Colors.black,
-      Colors.white,
-      Colors.indigo,
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Select Color:', style: TextStyle(fontSize: 16)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: colors.map((color) {
-            final isSelected = _selectedColor == color;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedColor = color),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color,
-                  border: Border.all(
-                    color: isSelected ? Colors.deepPurple : Colors.grey,
-                    width: isSelected ? 3 : 1,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: isSelected 
-                  ? const Icon(Icons.check, color: Colors.white, size: 20)
-                  : null,
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
   }
 
   @override
@@ -165,11 +148,15 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildColorPicker(),
+            // Replaced custom color picker with reusable widget
+            ColorPickerWidget(
+              selectedColor: _selectedColor,
+              onColorSelected: (color) => setState(() => _selectedColor = color),
+            ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: _pickImage,
-              icon: const Icon(Icons.image),
+              onPressed: _showImageSourceDialog,
+              icon: const Icon(Icons.camera_alt),
               label: const Text('Change Image'),
             ),
             if (_selectedImage != null) ...[

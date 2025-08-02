@@ -3,14 +3,16 @@ class ClothingItem {
   final String name;
   final String category;
   final String imagePath;
-  final String colorHex; // ✅ This is the new field
+  final String colorHex;
+  final String dateAdded;
 
   ClothingItem({
     this.id,
     required this.name,
     required this.category,
     required this.imagePath,
-    required this.colorHex, // ✅ Mark it required
+    required this.colorHex,
+    required this.dateAdded,
   });
 
   Map<String, dynamic> toMap() {
@@ -19,7 +21,8 @@ class ClothingItem {
       'name': name,
       'category': category,
       'imagePath': imagePath,
-      'colorHex': colorHex, // ✅ Store in database
+      'colorHex': colorHex,
+      'dateAdded': dateAdded,
     };
   }
 
@@ -29,7 +32,8 @@ class ClothingItem {
       name: map['name'],
       category: map['category'],
       imagePath: map['imagePath'],
-      colorHex: map['colorHex'], // ✅ Load from database
+      colorHex: map['colorHex'],
+      dateAdded: map['dateAdded'] ?? DateTime.now().toIso8601String(),
     );
   }
 }
