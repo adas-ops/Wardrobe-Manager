@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:wardrobe_manager/helpers/database_helper.dart';
 import 'package:wardrobe_manager/models/clothing_item.dart';
 import 'package:wardrobe_manager/widgets/advanced_color_picker.dart';
+import 'package:wardrobe_manager/widgets/photo_picker.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -20,41 +20,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isSaving = false;
 
-  Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source);
-    if (picked != null) {
-      setState(() => _selectedImage = File(picked.path));
-    }
-  }
-
-  Future<void> _showImageSourceDialog() async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Photo'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  // Helper method to convert Color to hex string
+  String colorToHex(Color color) {
+    return '#${color.value.toRadixString(16).padLeft(8, '0')}';
   }
 
   Future<void> _saveItem() async {
@@ -74,8 +42,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
         name: _nameController.text,
         category: _categoryController.text,
         imagePath: _selectedImage!.path,
-        colorHex: _selectedColor.value.toRadixString(16),
-        dateAdded: DateTime.now().toIso8601String(),
+        color: colorToHex(_selectedColor), // FIXED: Convert to hex string
+        dateAdded: DateTime.now(),
+        wearCount: 0,
       );
       
       await _dbHelper.insertClothingItem(item);
@@ -114,25 +83,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
               padding: const EdgeInsets.all(16),
               child: ListView(
                 children: [
-                  GestureDetector(
-                    onTap: _showImageSourceDialog,
-                    child: Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _selectedImage == null
-                          ? const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.camera_alt, size: 50),
-                                SizedBox(height: 8),
-                                Text('Tap to add photo'),
-                              ],
-                            )
-                          : Image.file(_selectedImage!, fit: BoxFit.cover),
-                    ),
+                  PhotoPicker(
+                    selectedImage: _selectedImage,
+                    onImageSelected: (image) => setState(() => _selectedImage = image),
                   ),
                   const SizedBox(height: 20),
                   TextField(

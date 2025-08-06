@@ -1,7 +1,8 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:wardrobe_manager/screens/add_item_screen.dart';
-import 'package:wardrobe_manager/screens/favorites_screen.dart';
-import 'package:wardrobe_manager/screens/settings_screen.dart';
+import 'package:wardrobe_manager/screens/calendar_screen.dart';
+import 'package:wardrobe_manager/screens/planner_screen.dart';
 import 'package:wardrobe_manager/screens/wardrobe_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,35 +14,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  final PageController _pageController = PageController();
 
   final List<Widget> _screens = [
     const WardrobeScreen(),
-    const FavoritesScreen(),
-    const SettingsScreen(),
+    const PlannerScreen(),
+    const CalendarScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.checkroom),
-            label: 'Wardrobe',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: _screens,
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
       floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
               onPressed: () async {
@@ -49,12 +38,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   context,
                   MaterialPageRoute(builder: (context) => const AddItemScreen()),
                 );
-                // Refresh wardrobe screen
                 setState(() {});
               },
               child: const Icon(Icons.add),
             )
           : null,
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() => _currentIndex = index);
+        _pageController.jumpToPage(index);
+      },
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.checkroom),
+          label: 'Wardrobe',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today),
+          label: 'Planner',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_month),
+          label: 'Calendar',
+        ),
+      ],
     );
   }
 }

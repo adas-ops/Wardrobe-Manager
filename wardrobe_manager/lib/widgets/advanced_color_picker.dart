@@ -39,7 +39,7 @@ class AdvancedColorPicker extends StatelessWidget {
                     child: ColorPicker(
                       pickerColor: selectedColor,
                       onColorChanged: onColorSelected,
-                      showLabel: true,
+                      labelTypes: const [],
                       pickerAreaHeightPercent: 0.8,
                       enableAlpha: false,
                     ),

@@ -14,6 +14,9 @@ class SettingsHelper {
       darkModeEnabled: prefs.getBool(PreferenceKeys.darkMode) ?? false,
       backupEnabled: prefs.getBool(PreferenceKeys.autoBackup) ?? true,
       showTutorial: prefs.getBool(PreferenceKeys.showTutorial) ?? true,
+      navLayout: prefs.getString(PreferenceKeys.navLayout) ?? 'Standard',
+      showNavLabels: prefs.getBool(PreferenceKeys.showNavLabels) ?? true,
+      sortOption: prefs.getString(PreferenceKeys.sortOption) ?? 'newest',
     );
   }
 
@@ -23,5 +26,8 @@ class SettingsHelper {
     await prefs.setBool(PreferenceKeys.darkMode, settings.darkModeEnabled);
     await prefs.setBool(PreferenceKeys.autoBackup, settings.backupEnabled);
     await prefs.setBool(PreferenceKeys.showTutorial, settings.showTutorial);
+    await prefs.setString(PreferenceKeys.navLayout, settings.navLayout);
+    await prefs.setBool(PreferenceKeys.showNavLabels, settings.showNavLabels);
+    await prefs.setString(PreferenceKeys.sortOption, settings.sortOption);
   }
 }

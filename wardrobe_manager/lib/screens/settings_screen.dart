@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../helpers/settings_helper.dart';
 import '../models/settings.dart';
+import '../helpers/settings_helper.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,12 +12,13 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late final SettingsHelper _settingsHelper;
+  late final SettingsHelper _settingsHelper; // Reverted to original class name
   late AppSettings _currentSettings;
   bool _isLoading = false;
 
   final List<String> _categories = ['All', 'Shirts', 'Pants', 'Shoes', 'Accessories'];
   final List<String> _qualityOptions = ['Low', 'Medium', 'High'];
+  final List<String> _navLayouts = ['Standard', 'Compact', 'Icon Only'];
 
   @override
   void initState() {
@@ -79,6 +81,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (value) => _currentSettings.updateSettings(darkModeEnabled: value),
                 ),
                 
+                _buildSectionHeader('Navigation'),
+                _buildDropdownSetting(
+                  'Layout Style',
+                  _currentSettings.navLayout,
+                  _navLayouts,
+                  (value) => _currentSettings.updateSettings(navLayout: value),
+                ),
+                SwitchListTile(
+                  title: const Text('Show Labels'),
+                  value: _currentSettings.showNavLabels,
+                  onChanged: (value) => _currentSettings.updateSettings(showNavLabels: value),
+                ),
+                
                 _buildSectionHeader('Data Management'),
                 SwitchListTile(
                   title: const Text('Automatic Backup'),
@@ -99,7 +114,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildActionButton('Reset to Defaults', Icons.restart_alt, _resetSettings),
                 const SizedBox(height: 16),
                 _buildActionButton('Backup Now', Icons.backup, () {
-                  // Implement backup functionality
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Backup completed successfully!'))
                   );

@@ -6,6 +6,9 @@ class AppSettings extends ChangeNotifier {
   bool darkModeEnabled;
   bool backupEnabled;
   bool showTutorial;
+  String navLayout;
+  bool showNavLabels;
+  String sortOption;
 
   AppSettings({
     this.defaultCategory = 'All',
@@ -13,6 +16,9 @@ class AppSettings extends ChangeNotifier {
     this.darkModeEnabled = false,
     this.backupEnabled = true,
     this.showTutorial = true,
+    this.navLayout = 'Standard',
+    this.showNavLabels = true,
+    this.sortOption = 'newest',
   });
 
   void updateSettings({
@@ -21,12 +27,18 @@ class AppSettings extends ChangeNotifier {
     bool? darkModeEnabled,
     bool? backupEnabled,
     bool? showTutorial,
+    String? navLayout,
+    bool? showNavLabels,
+    String? sortOption,
   }) {
     if (defaultCategory != null) this.defaultCategory = defaultCategory;
     if (photoQuality != null) this.photoQuality = photoQuality;
     if (darkModeEnabled != null) this.darkModeEnabled = darkModeEnabled;
     if (backupEnabled != null) this.backupEnabled = backupEnabled;
     if (showTutorial != null) this.showTutorial = showTutorial;
+    if (navLayout != null) this.navLayout = navLayout;
+    if (showNavLabels != null) this.showNavLabels = showNavLabels;
+    if (sortOption != null) this.sortOption = sortOption;
     notifyListeners();
   }
 
@@ -36,6 +48,9 @@ class AppSettings extends ChangeNotifier {
     darkModeEnabled = false;
     backupEnabled = true;
     showTutorial = true;
+    navLayout = 'Standard';
+    showNavLabels = true;
+    sortOption = 'newest';
     notifyListeners();
   }
 }
