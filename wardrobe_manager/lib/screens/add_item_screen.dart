@@ -22,7 +22,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   // Helper method to convert Color to hex string
   String colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).padLeft(8, '0')}';
+      return '#${color.toARGB32().toRadixString(16).padLeft(8, '0')}';
   }
 
   Future<void> _saveItem() async {

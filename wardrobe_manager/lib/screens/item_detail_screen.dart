@@ -102,10 +102,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               try {
                 await _dbHelper.deleteItem(_currentItem.id!);
                 // Navigate back to wardrobe screen with refresh flag
-                if (mounted) Navigator.pop(context, true);
+                if (mounted && context.mounted) {
+                  Navigator.pop(context, true);
+                }
               } catch (e) {
                 // Show error message
-                if (mounted) {
+                if (mounted && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to delete item: $e')),
                   );
