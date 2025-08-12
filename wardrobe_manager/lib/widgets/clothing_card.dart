@@ -1,68 +1,66 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:wardrobe_manager/models/clothing_item.dart';
+import '../models/clothing_item.dart';
+import 'dart:io';
 
 class ClothingCard extends StatelessWidget {
   final ClothingItem item;
-  final VoidCallback onDelete;
-  final VoidCallback onToggleFavorite;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const ClothingCard({
     super.key,
     required this.item,
-    required this.onDelete,
-    required this.onToggleFavorite,
-    required this.onTap,
+    this.onTap,
+    this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
+    Color displayColor = Colors.grey;
+
+    try {
+      String hex = item.colorHex.replaceAll(RegExp(r'[^0-9a-fA-F]'), '').trim();
+      
+      if (hex.isEmpty) {
+        displayColor = Colors.grey;
+      } else {
+        if (hex.length == 6) {
+          hex = 'FF$hex';
+        } else if (hex.length == 3) {
+          hex = 'FF${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}';
+        } else if (hex.length == 4) {
+          hex = '${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}';
+        } else if (hex.length == 1) {
+          hex = 'FF${hex * 6}';
+        } else if (hex.length == 2) {
+          hex = 'FF$hex$hex$hex';
+        }
+        
+        if (hex.length == 8) {
+          displayColor = Color(int.parse(hex, radix: 16));
+        }
+      }
+    } catch (e) {
+      displayColor = Colors.grey;
+    }
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.file(
-            File(item.imagePath),
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 60,
-                height: 60,
-                color: Colors.grey[300],
-                child: const Icon(Icons.broken_image),
-              );
-            },
-          ),
-        ),
+        leading: item.imagePath.isNotEmpty
+            ? Image.file(
+                File(item.imagePath),
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => 
+                  Container(width: 50, height: 50, color: Colors.grey),
+              )
+            : Container(width: 50, height: 50, color: Colors.grey),
         title: Text(item.name),
         subtitle: Text(item.category),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: Color(int.parse(item.colorHex, radix: 16)),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey),
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.star,
-                color: item.isFavorite ? Colors.amber : Colors.grey,
-              ),
-              onPressed: onToggleFavorite,
-            ),
-          ],
-        ),
+        trailing: CircleAvatar(backgroundColor: displayColor, radius: 10),
         onTap: onTap,
-        onLongPress: onDelete,
+        onLongPress: onLongPress,
       ),
     );
   }

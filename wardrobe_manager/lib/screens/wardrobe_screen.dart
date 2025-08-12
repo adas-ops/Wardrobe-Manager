@@ -25,7 +25,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Get settings safely from context
     _settings = Provider.of<AppSettings>(context, listen: false);
     _loadItems();
   }
@@ -128,11 +127,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             _loadItems(_searchQuery);
                           }
                         },
-                        onDelete: () => _confirmDelete(item.id!),
-                        onToggleFavorite: () async {
-                          await _dbHelper.toggleFavorite(item.id!, !item.isFavorite);
-                          if (mounted) _loadItems(_searchQuery);
-                        },
                       );
                     },
                   ),
@@ -234,43 +228,6 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  void _confirmDelete(int id) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: const Text('Are you sure you want to delete this item?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context); // Close dialog immediately
-              try {
-                await _dbHelper.deleteItem(id);
-                if (mounted) {
-                  _loadItems(_searchQuery);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Item deleted successfully')),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to delete item: $e')),
-                  );
-                }
-              }
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -1,4 +1,3 @@
-// lib/screens/planner_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wardrobe_manager/helpers/database_helper.dart';
@@ -69,7 +68,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
         const SnackBar(content: Text('Outfit saved successfully!')),
       );
       
-      // Reset selections
       setState(() {
         _selectedTop = null;
         _selectedBottom = null;
@@ -115,8 +113,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
                         child: ClothingCard(
                           item: item,
                           onTap: () => onSelect(item),
-                          onDelete: () {},
-                          onToggleFavorite: () {},
                         ),
                       ),
                     );
@@ -174,7 +170,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
             ),
             const SizedBox(height: 20),
             
-            // Top section
             _buildCategorySection(
               'Tops',
               _topItems,
@@ -182,7 +177,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
               (item) => setState(() => _selectedTop = item),
             ),
             
-            // Bottom section
             _buildCategorySection(
               'Bottoms',
               _bottomItems,
@@ -190,7 +184,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
               (item) => setState(() => _selectedBottom = item),
             ),
             
-            // Shoes section
             _buildCategorySection(
               'Shoes',
               _shoesItems,
@@ -198,7 +191,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
               (item) => setState(() => _selectedShoes = item),
             ),
             
-            // Accessories section
             _buildCategorySection(
               'Accessories',
               _accessoryItems,
@@ -206,7 +198,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
               (item) => setState(() => _selectedAccessory = item),
             ),
             
-            // Preview section
             const Text('Preview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             if (_selectedTop != null || _selectedBottom != null || _selectedShoes != null || _selectedAccessory != null)
