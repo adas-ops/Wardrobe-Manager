@@ -1,8 +1,7 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:wardrobe_manager/screens/add_item_screen.dart';
-import 'package:wardrobe_manager/screens/calendar_screen.dart';
 import 'package:wardrobe_manager/screens/planner_screen.dart';
+import 'package:wardrobe_manager/screens/statistics_screen.dart';
 import 'package:wardrobe_manager/screens/wardrobe_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const WardrobeScreen(),
     const PlannerScreen(),
-    const CalendarScreen(),
+    const StatisticsScreen(),
   ];
 
   @override
@@ -63,8 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Planner',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month),
-          label: 'Calendar',
+          icon: Icon(Icons.analytics),
+          label: 'Stats',
         ),
       ],
     );
