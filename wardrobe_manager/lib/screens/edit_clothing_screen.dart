@@ -27,7 +27,6 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
     _categoryController = TextEditingController(text: widget.item.category);
-    // Fixed syntax error: Correctly parse color hex string
     _selectedColor = Color(int.parse(widget.item.color.substring(1), radix: 16));
   }
 
@@ -48,7 +47,6 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
       return;
     }
 
-    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -76,15 +74,12 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
         lastWorn: widget.item.lastWorn,
       );
 
-      // Fixed method name: Changed to updateClothingItem
       await _dbHelper.updateClothingItem(updatedItem);
       
-      // Close loading dialog only if mounted
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       Navigator.pop(context, updatedItem); // Return to previous screen
     } catch (e) {
-      // Close loading dialog only if mounted
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
       
@@ -98,12 +93,14 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Item'),
+        title: const Text('Edit Item', style: TextStyle(fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: Icon(Icons.save, color: colorScheme.primary),
             onPressed: _updateItem,
           ),
         ],
@@ -115,56 +112,77 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                height: 200,
+                height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: _selectedImage != null
-                    ? Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(File(_selectedImage!.path), fit: BoxFit.cover),
+                      )
                     : widget.item.imagePath.isNotEmpty
-                        ? ImageViewer(imagePath: widget.item.imagePath)
-                        : const Column(
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: ImageViewer(imagePath: widget.item.imagePath),
+                          )
+                        : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo, size: 50),
-                              Text('Tap to add image'),
+                              Icon(Icons.add_a_photo, size: 50, color: colorScheme.onSurfaceVariant),
+                              const SizedBox(height: 8),
+                              Text('Tap to change image', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                             ],
                           ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _categoryController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Category',
-                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Row(
               children: [
-                const Text('Color: ', style: TextStyle(fontSize: 16)),
+                Text('Item Color: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Spacer(),
                 Container(
-                  width: 30,
-                  height: 30,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: _selectedColor,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black38),
+                    border: Border.all(color: Colors.grey.shade400),
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
+                const SizedBox(width: 12),
+                OutlinedButton(
                   onPressed: () async {
                     final Color? pickedColor = await showDialog<Color>(
                       context: context,
@@ -194,21 +212,31 @@ class _EditClothingScreenState extends State<EditClothingScreen> {
                       setState(() => _selectedColor = pickedColor);
                     }
                   },
-                  child: const Text('Change Color'),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: colorScheme.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text('Change', style: TextStyle(color: colorScheme.primary)),
                 ),
               ],
             ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _updateItem,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _updateItem,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Save Changes', style: TextStyle(fontSize: 18)),
               ),
+              child: const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -286,7 +314,6 @@ class _ColorPickerState extends State<ColorPicker> {
                         ? Border.all(color: Colors.grey)
                         : null,
                   ),
-                  // Fixed: Use direct color comparison instead of deprecated value property
                   child: _currentColor == color
                       ? const Icon(Icons.check, color: Colors.white)
                       : null,
@@ -297,7 +324,6 @@ class _ColorPickerState extends State<ColorPicker> {
         ),
         const SizedBox(height: 20),
         Slider(
-          // Fixed: Use alpha channel correctly without deprecated property
           value: (_currentColor.a * 255).toDouble(),
           min: 0,
           max: 255,
@@ -308,7 +334,6 @@ class _ColorPickerState extends State<ColorPicker> {
             });
           },
         ),
-        // Fixed: Calculate opacity percentage correctly
         Text('Opacity: ${(_currentColor.a * 100).round()}%'),
       ],
     );

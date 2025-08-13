@@ -39,33 +39,112 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
                 setState(() {});
               },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
               child: const Icon(Icons.add),
             )
           : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
   Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (index) {
-        setState(() => _currentIndex = index);
-        _pageController.jumpToPage(index);
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.checkroom),
-          label: 'Wardrobe',
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
+    final onSurfaceColor = colorScheme.onSurface;
+    
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Color.alphaBlend(
+              Colors.black.withAlpha(25),
+              colorScheme.surface,
+            ),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          )
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          _pageController.jumpToPage(index);
+        },
+        elevation: 8,
+        backgroundColor: colorScheme.surface,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: Color.alphaBlend(
+          onSurfaceColor.withAlpha(153),
+          colorScheme.surface,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Planner',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.analytics),
-          label: 'Stats',
-        ),
-      ],
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        type: BottomNavigationBarType.fixed,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        items: [
+          BottomNavigationBarItem(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              child: const Icon(Icons.checkroom_outlined, size: 26),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Color.alphaBlend(
+                  primaryColor.withAlpha(25),
+                  colorScheme.surface,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.checkroom, size: 26, color: primaryColor),
+            ),
+            label: 'Wardrobe',
+          ),
+          BottomNavigationBarItem(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              child: const Icon(Icons.calendar_month_outlined, size: 26),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Color.alphaBlend(
+                  primaryColor.withAlpha(25),
+                  colorScheme.surface,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.calendar_month, size: 26, color: primaryColor),
+            ),
+            label: 'Planner',
+          ),
+          BottomNavigationBarItem(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              child: const Icon(Icons.analytics_outlined, size: 26),
+            ),
+            activeIcon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Color.alphaBlend(
+                  primaryColor.withAlpha(25),
+                  colorScheme.surface,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.analytics, size: 26, color: primaryColor),
+            ),
+            label: 'Stats',
+          ),
+        ],
+      ),
     );
   }
 }

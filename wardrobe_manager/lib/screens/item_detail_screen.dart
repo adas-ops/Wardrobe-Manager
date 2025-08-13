@@ -90,7 +90,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Item'),
-        content: const Text('Are you sure you want to delete this item?'),
+        content: const Text('Are you sure you want to permanently delete this item?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -125,17 +125,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentItem.name),
+        title: Text(_currentItem.name, style: const TextStyle(fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
             icon: Icon(
               _currentItem.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _currentItem.isFavorite ? Colors.red : null,
+              color: _currentItem.isFavorite ? Colors.red : Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: _toggleFavorite,
           ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
             onPressed: () async {
               final updatedItem = await Navigator.push(
                 context,
@@ -149,49 +149,74 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
             onPressed: _confirmDelete,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: ImageViewer(imagePath: _currentItem.imagePath),
+              child: Container(
+                height: 280,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ImageViewer(imagePath: _currentItem.imagePath),
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildDetailRow('Name', _currentItem.name),
-            _buildDetailRow('Category', _currentItem.category),
-            _buildDetailRow('Color', _currentItem.color),
-            _buildDetailRow('Date Added', _formatDate(_currentItem.dateAdded)),
-            _buildDetailRow('Wear Count', _currentItem.wearCount.toString()),
+            const SizedBox(height: 28),
+            _buildDetailCard('Name', _currentItem.name),
+            _buildDetailCard('Category', _currentItem.category),
+            _buildDetailCard('Color', _currentItem.color),
+            _buildDetailCard('Date Added', _formatDate(_currentItem.dateAdded)),
+            _buildDetailCard('Wear Count', _currentItem.wearCount.toString()),
             if (_currentItem.lastWorn != null)
-              _buildDetailRow('Last Worn', _formatDate(_currentItem.lastWorn!)),
+              _buildDetailCard('Last Worn', _formatDate(_currentItem.lastWorn!)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
+  Widget _buildDetailCard(String label, String value) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).dividerColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(child: Text(value)),
-        ],
+            const Spacer(),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
