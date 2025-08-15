@@ -150,6 +150,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             _searchQuery.isEmpty && _selectedCategory == 'All'
                 ? 'Your wardrobe is empty'
                 : 'No matching items',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).disabledColor,
                 ),
@@ -159,6 +160,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
             _searchQuery.isEmpty && _selectedCategory == 'All'
                 ? 'Add your first item to get started'
                 : 'Try adjusting your search or filters',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).disabledColor,
                 ),

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:wardrobe_manager/helpers/database_helper.dart';
 import 'package:wardrobe_manager/models/clothing_item.dart';
@@ -110,80 +109,136 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         items.isEmpty
             ? Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   'No $title available',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // 0.6 opacity
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(180),
                   ),
                 ),
               )
             : SizedBox(
-                height: 170,
+                height: 140,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
+                    final isSelected = selectedItem?.id == item.id;
+                    
                     return GestureDetector(
                       onTap: () => onSelect(item),
                       child: Container(
-                        width: 140,
-                        margin: const EdgeInsets.only(right: 16),
+                        width: 120,
+                        height: 140,
+                        margin: const EdgeInsets.only(right: 12),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: selectedItem?.id == item.id 
-                                ? Theme.of(context).colorScheme.primary 
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
                                 : Colors.transparent,
-                            width: 2,
+                            width: isSelected ? 2.0 : 0,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(13), // 0.05 opacity
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
                         ),
-                        child: ClothingCard(
-                          item: item,
-                          onTap: () => onSelect(item),
+                        child: Stack(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Image container
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(10),
+                                    ),
+                                    child: Container(
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      constraints: const BoxConstraints.expand(),
+                                      child: item.imagePath.isNotEmpty
+                                          ? Image.asset(
+                                              item.imagePath,
+                                              fit: BoxFit.contain,
+                                            )
+                                          : Icon(
+                                              Icons.photo,
+                                              size: 48,
+                                              color: Theme.of(context).colorScheme.onSurface.withAlpha(77),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                                // Text container
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                  constraints: const BoxConstraints(
+                                    minHeight: 40,
+                                    maxHeight: 40,
+                                  ),
+                                  child: Text(
+                                    item.name,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Selection badge
+                            if (isSelected)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.check,
+                                    size: 14,
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     );
                   },
                 ),
               ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
       ],
     );
   }
 
   Widget _buildOutfitPreview() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(26), // 0.1 opacity
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -197,15 +252,16 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
               children: [
                 Icon(
                   Icons.checkroom, 
-                  size: 48, 
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(102) // 0.4 opacity
+                  size: 36,
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(102),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   'Select items to see outfit preview',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // 0.6 opacity
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
                   ),
                 ),
               ],
@@ -217,68 +273,25 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
 
   Widget _buildPreviewItem(ClothingItem item, String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         children: [
           Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+            '$label: ',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest, // Updated
-                ),
-                child: item.imagePath.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(item.imagePath),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[200],
-                              child: const Center(child: Icon(Icons.broken_image)),
-                            );
-                          },
-                        ),
-                      )
-                    : Center(
-                        child: Icon(
-                          Icons.photo, 
-                          size: 30, 
-                          color: Theme.of(context).colorScheme.onSurfaceVariant
-                        )
-                      ),
+          Expanded(
+            child: Text(
+              item.name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.category,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withAlpha(153) // 0.6 opacity
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -293,15 +306,16 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
           children: [
             Icon(
               Icons.checkroom, 
-              size: 64, 
-              color: Theme.of(context).colorScheme.onSurface.withAlpha(102) // 0.4 opacity
+              size: 48,
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(102),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'No clothing items found',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18,
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(153), // 0.6 opacity
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(153),
               ),
             ),
           ],
@@ -310,14 +324,14 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.only(top: 12),
       itemCount: _categoryNames.length,
       itemBuilder: (context, index) {
         final category = _categoryNames[index];
         final items = _wardrobeCategories[category]!;
         
         return Padding(
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: const EdgeInsets.only(bottom: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -325,23 +339,22 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   category,
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.75,
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.65,
                 ),
                 itemCount: items.length,
                 itemBuilder: (context, itemIndex) {
@@ -376,7 +389,7 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
           indicatorColor: Theme.of(context).colorScheme.primary,
           labelStyle: const TextStyle(fontWeight: FontWeight.w500),
           labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withAlpha(153), // 0.6 opacity
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withAlpha(153),
           tabs: const [
             Tab(icon: Icon(Icons.calendar_month), text: 'Plan'), 
             Tab(icon: Icon(Icons.checkroom), text: 'Wardrobe'),
@@ -386,28 +399,27 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
       body: TabBarView(
         controller: _tabController,
         children: [
-          // Outfit Planner Tab
           SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Card(
-                  elevation: 2,
+                  elevation: 1,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.calendar_today, size: 20, color: Theme.of(context).colorScheme.primary),
-                            const SizedBox(width: 10),
-                            Text(
+                            Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 8),
+                            const Text(
                               'Date:',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                             const Spacer(),
                             TextButton(
@@ -429,37 +441,36 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                                 children: [
                                   Text(
                                     '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                    style: const TextStyle(fontSize: 16),
+                                    style: const TextStyle(fontSize: 14),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Icon(Icons.edit_calendar, size: 20),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.edit_calendar, size: 18),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
+                            const Text(
                               'Build Your Outfit',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             ElevatedButton.icon(
-                              icon: const Icon(Icons.save, size: 18),
-                              label: const Text('Save Outfit'),
+                              icon: const Icon(Icons.save, size: 16),
+                              label: const Text('Save Outfit', style: TextStyle(fontSize: 12)),
                               onPressed: _saveOutfit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(context).colorScheme.primary,
                                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
                             ),
@@ -469,7 +480,7 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
                 
                 _buildCategorySection(
                   'Tops',
@@ -500,22 +511,20 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                 ),
                 
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Outfit Preview',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildOutfitPreview(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
               ],
             ),
           ),
           
-          // Wardrobe Library Tab
           _buildWardrobeLibrary(),
         ],
       ),
