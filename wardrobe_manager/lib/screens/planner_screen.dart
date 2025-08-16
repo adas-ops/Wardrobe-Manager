@@ -370,7 +370,7 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                 itemCount: items.length,
                 itemBuilder: (context, itemIndex) {
                   final item = items[itemIndex];
-                  return ClothingCard(item: item);
+                  return ClothingCard(item: item, isGridView: true);
                 },
               ),
             ],
