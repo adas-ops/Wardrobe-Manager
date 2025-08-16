@@ -157,18 +157,19 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                         ),
                         child: Stack(
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                            Flex(
+                              direction: Axis.vertical,
                               children: [
                                 // Image container
                                 Expanded(
+                                  flex: 3,
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(10),
                                     ),
                                     child: Container(
+                                      width: double.infinity,
                                       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                      constraints: const BoxConstraints.expand(),
                                       child: item.imagePath.isNotEmpty
                                           ? Image.asset(
                                               item.imagePath,
@@ -182,22 +183,32 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
                                     ),
                                   ),
                                 ),
-                                // Text container
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                                  constraints: const BoxConstraints(
-                                    minHeight: 40,
-                                    maxHeight: 40,
-                                  ),
-                                  child: Text(
-                                    item.name,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                // Text container - Fixed
+                                Flexible(
+                                  flex: 1,
+                                  child: Container(
+                                    width: 120,
+                                    height: 40,
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.surface,
+                                      borderRadius: const BorderRadius.vertical(
+                                        bottom: Radius.circular(10),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          item.name,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -529,5 +540,11 @@ class _PlannerScreenState extends State<PlannerScreen> with SingleTickerProvider
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 }

@@ -44,23 +44,98 @@ class ClothingCard extends StatelessWidget {
       displayColor = Colors.grey;
     }
 
-    return Card(
-      child: ListTile(
-        leading: item.imagePath.isNotEmpty
-            ? Image.file(
-                File(item.imagePath),
-                width: 50,
-                height: 50,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => 
-                  Container(width: 50, height: 50, color: Colors.grey),
-              )
-            : Container(width: 50, height: 50, color: Colors.grey),
-        title: Text(item.name),
-        subtitle: Text(item.category),
-        trailing: CircleAvatar(backgroundColor: displayColor, radius: 10),
-        onTap: onTap,
-        onLongPress: onLongPress,
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image container
+            Expanded(
+              flex: 3,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Container(
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: item.imagePath.isNotEmpty
+                      ? Image.file(
+                          File(item.imagePath),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(
+                                Icons.photo,
+                                size: 32,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                              ),
+                        )
+                      : Icon(
+                          Icons.photo,
+                          size: 32,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                        ),
+                ),
+              ),
+            ),
+            // Text and details container
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Item name
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          item.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Category and color indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.category,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        CircleAvatar(
+                          backgroundColor: displayColor,
+                          radius: 6,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
